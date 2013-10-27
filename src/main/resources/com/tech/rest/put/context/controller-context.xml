@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- #SPRING -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+	<!--
+		# MVC annotation driven - Explanation 	
+		Configures support for Spring MVC features such as declarative validation with @Valid, 
+		HTTP message conversion with @RequestBody/@ResponseBody. Support for reading 
+		and writing JSON, if Jackson is present on the classpath
+		
+		Tag added in Spring 3.0 which does the following:
+		1. Configures the Spring 3 Type ConversionService (alternative to PropertyEditors)
+		2. Adds support for formatting Number fields with @NumberFormat
+		3. Adds support for formatting Date, Calendar, and Joda Time fields with @DateTimeFormat, if Joda Time is on the classpath
+		4. Adds support for validating @Controller inputs with @Valid, if a JSR-303 Provider is on the classpath
+		5. Adds support for support for reading and writing XML, if JAXB is on the classpath (HTTP message conversion with @RequestBody/@ResponseBody)
+		6. Adds support for reading and writing JSON, if Jackson is o n the classpath (along the same lines as #5)
+				
+	 -->
+	<!-- <mvc:annotation-driven/> -->
+	
+	<!-- 
+		# Context component scan - Explanation
+		<context:component-scan/> logically extends <context:annotation-config/> with CLASSPATH component scanning and Java @Configuration features. 
+		So basically <context:component-scan/> recognizes a superset of annotations recognized by <context:annotation-config/> 
+		@Component, @Service, @Repository, @Controller, @Endpoint
+    	@Configuration, @Bean, @Lazy, @Scope, @Order, @Primary, @Profile, @DependsOn, @Import, @ImportResource
+		
+		<context:annotation-config> is used to activate annotations in beans already registered in the application context 
+		(no matter if they were defined with XML or by package scanning).
+
+		<context:component-scan> can also do what <context:annotation-config> does but <context:component-scan> also scans packages 
+		to find and register beans within the application context.		
+		
+	 -->
+	<!-- Adding component scan - Start -->
+	<context:component-scan base-package="com.tech.rest.put.controller" />
+	<!-- Adding component scan - End -->
+	
+	<bean id="employeeController" class="com.tech.rest.put.controller.EmployeeController">
+		<property name="jaxb2Mashaller" ref="jaxbMarshaller" />
+	</bean>
+	
+	<!-- Implementation of the Marshaller interface for JAXB 2.0. for xml-->
+	<bean id="jaxbMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+		<property name="classesToBeBound">
+			<list>
+				<value>com.tech.rest.put.model.EmployeeList</value>
+				<value>com.tech.rest.put.model.EmployeeDetails</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean
+		class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="defaultViews">
+			<list>
+				<!--For mapping JSON object  -->
+				<bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />
+				<!--For XML object -->
+				<bean id="employeeView" class="org.springframework.web.servlet.view.xml.MarshallingView">
+					<constructor-arg ref="jaxbMarshaller" />
+				</bean>
+			</list>
+		</property>
+		<property name="viewResolvers">
+			<list>
+				<!-- 
+					Simple implementation of ViewResolver that interprets a view name as 
+					bean name in the current application context, i.e. in the XML file 
+					of the executing DispatcherServlet 
+				-->
+				<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+					<property name="order" value="1" />
+				</bean>
+				
+				<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">	
+					<property name="order" value="2" />			
+					<property name="prefix" value="/WEB-INF/jsp/" />
+					<property name="suffix" value=".jsp" />
+				</bean>	
+			</list>
+		</property>
+	</bean>			 	
+</beans>
